@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>
+      Blog posts
+    </title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  </head>
+  <body>
+    <div>
+      <h1>
+        All Posts
+      </h1>
+      <div id="postContainer">
+      </div>
+      <h2>Create new post</h2>
+      <form>
+        <label>Title</label>
+        <input id="postTitle" type="text"><br />
+        <label>Content</label>
+        <input id="postContent" type="text"><br />
+        <label>Author</label>
+        <input id="postAuthor" type="text"><br />
+        <label>Publish date</label>
+        <input id="postPublishDate" type="text"><br />
+        <button id ="createPost" type="submit"><br />
+          CreatePost
+        </button>
+      </form>
+
+      <h2>Delete post</h2>
+      <form>
+        <label>Id</label>
+        <input id="deletePostId" type="text"><br />
+        <button id ="deletePost" type="submit"><br />
+          Delete Post
+        </button>
+      </form>
+
+      <h2>Update post</h2>
+      <form>
+        <label>Id</label>
+        <input id="updatePostId" type="text"><br />
+        <label>Title</label>
+        <input id="updatePostTitle" type="text"><br />
+        <label>Content</label>
+        <input id="updatePostContent" type="text"><br />
+        <label>Author</label>
+        <input id="updatePostAuthor" type="text"><br />
+        <label>Publish date</label>
+        <input id="updatePostPublishDate" type="text"><br />
+        <button id ="updatePost" type="submit"><br />
+          Update post
+        </button>
+      </form>
+    </div>
+  </body>
+  <script src="main.js"></script>
+</html>
