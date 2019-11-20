@@ -31,6 +31,7 @@ $("#createPost").click((e) => {
   e.preventDefault();
 
   const body = {
+    id: $("#postId").val(),
     title: $("#postTitle").val(),
     content: $("#postContent").val(),
     author: $("#postAuthor").val(),

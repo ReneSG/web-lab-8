@@ -3,6 +3,10 @@ let Morgan = require("Morgan")
 let app = express()
 let uuid = require('uuid')
 let cors = require('cors')
+let mongoose = require( "mongoose" );
+let { PostList } = require('./blog-post-model');
+let { DATABASE_URL, PORT } = require('./config');
+
 var bodyParser = require('body-parser')
 
 app.use(cors());
@@ -13,39 +17,13 @@ app.use(bodyParser.urlencoded({
 
 app.use(Morgan("dev"))
 
-let allPosts = [
-  {
-    id: uuid.v4(),
-    title: "Titulo 1",
-    content: "Contenido 1",
-    author: "Autor 1",
-    publishDate: Date.now(),
-  },
-  {
-    id: uuid.v4(),
-    title: "Titulo 2",
-    content: "Contenido 2",
-    author: "Autor 2",
-    publishDate: Date.now(),
-  },
-  {
-    id: uuid.v4(),
-    title: "Titulo 3",
-    content: "Contenido 3",
-    author: "Autor 3",
-    publishDate: Date.now(),
-  },
-  {
-    id: uuid.v4(),
-    title: "Titulo 4",
-    content: "Contenido 4",
-    author: "Autor 4",
-    publishDate: Date.now(),
-  },
-];
-
 app.get("/blog-posts", (req, res, next) => {
-  res.status(200).json(allPosts);
+  PostList.get()
+    .then(posts => {
+      return res.status(200).json(posts);
+    }).catch( er => {
+      throw Error(er)
+    });
 });
 
 app.get("/blog-post", (req, res, next) => {
@@ -70,21 +48,28 @@ app.post("/blog-posts", (req, res) => {
   const title = req.body.title;
   const content = req.body.content;
   const publishDate = req.body.publishDate;
-  const id = uuid.v4();
-  allPosts.push({id: id, title: title, content: content, author: author, publishDate: publishDate});
-  res.status(201).json({});
+  const id = req.body.id;
+  PostList.post({id: id, title: title, content: content, author: author, publishDate: publishDate})
+    .then(newPost => {
+      res.status(201).json(newPost);
+    }).catch(er => {
+      throw Error(er);
+      res.statusMessage = "Something went wrong with the DB. Try again later.";
+			return res.status( 500 ).json({
+				status : 500,
+				message : "Something went wrong with the DB. Try again later."
+      });
+    });
 });
 
 app.delete("/blog-posts/:id", (req, res) => {
-  const newPosts = allPosts.filter((el) => {
-    return el.id != req.params.id;
-  })
-
-  if (newPosts.length == allPosts.length) {
-    res.status(404).json({error: "Post no existe"});
-  }
-  allPosts = newPosts;
-  res.status(200).json({});
+  PostList.delete(req.params.id)
+    .then(response => {
+      return res.status(200).json({});
+    })
+    .catch(error => {
+      res.status(404).json({error: "Post no existe"});
+    });
 });
 
 app.put("/blog-posts/:id", (req, res) => {
@@ -104,27 +89,77 @@ app.put("/blog-posts/:id", (req, res) => {
     return;
   }
 
-  postIndex = allPosts.findIndex(el => el.id == req.params.id);
+  newPost = {id: id}
 
   if (author) {
-    allPosts[postIndex].author = author;
+    newPost.author = author;
   }
 
   if (title) {
-    allPosts[postIndex].title = title;
+    newPost.title = title;
   }
 
   if (content) {
-    allPosts[postIndex].content = content;
+    newPost.content = content;
   }
 
   if (publishDate) {
-    allPosts[postIndex].publishDate = publishDate;
+    newPost.publishDate = publishDate;
   }
 
-  res.status(202).json({});
+  PostList.put(newPost)
+    .then(response => {
+      return res.status(202).json({});
+    })
+    .catch(er => {
+      throw Error(er)
+      return res.status(500).json({error: "Error en la db"});
+    })
 });
 
-app.listen("8080", () => {
-  console.log("Serving");
-});
+let server;
+
+function runServer(port, databaseUrl){
+	return new Promise( (resolve, reject ) => {
+		mongoose.connect(databaseUrl, response => {
+			if ( response ){
+				return reject(response);
+			}
+			else{
+				server = app.listen(port, () => {
+					console.log( "App is running on port " + port );
+					resolve();
+				})
+				.on( 'error', err => {
+					mongoose.disconnect();
+					return reject(err);
+				})
+			}
+		});
+	});
+}
+
+function closeServer(){
+	return mongoose.disconnect()
+		.then(() => {
+			return new Promise((resolve, reject) => {
+				console.log('Closing the server');
+				server.close( err => {
+					if (err){
+						return reject(err);
+					}
+					else{
+						resolve();
+					}
+				});
+			});
+		});
+}
+
+runServer( PORT, DATABASE_URL )
+	.catch( err => {
+		console.log( err );
+	});
+
+module.exports = {app, runServer, closeServer}
+
