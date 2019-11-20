@@ -1,5 +1,5 @@
 let express = require("express")
-let Morgan = require("Morgan")
+let Morgan = require("morgan")
 let app = express()
 let uuid = require('uuid')
 let cors = require('cors')
